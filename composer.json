@@ -11,8 +11,7 @@
 		"fzaninotto/faker": "~1.5",
 		"nesbot/carbon": "~1.10.0",
 		"aws/aws-sdk-php": "~2.4",
-		"aws/aws-sdk-php-laravel": "1.1.*",
-		"ext-gd": "*"
+		"aws/aws-sdk-php-laravel": "1.1.*"
 		},
 	"autoload": {
 		"classmap": [
