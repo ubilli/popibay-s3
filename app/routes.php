@@ -671,3 +671,9 @@ Route::get('s3test', function () {
 
 });
 
+Route::get('php', function () {
+   
+  echo phpinfo();
+
+});
+
