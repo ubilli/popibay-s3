@@ -9,7 +9,14 @@
  */
 class ImageUploadController extends \BaseController {
 
-	
+	/*
+		This class is a test for the not readble exception 
+		test for the class on heroku,
+		Note: this controller is a test controller.
+		The main controller is named "ImageUploadController_Main.php"
+	*/
+
+
 	public function image_local(){
 
 	  $all_inputs = Input::all();
@@ -102,6 +109,11 @@ class ImageUploadController extends \BaseController {
 		      $random_number = rand(11111,99999);
 		      $fileName = $random_number.'.'.$extension; // renaming image
 		      // Image::make($file)->resize(600, 357)->insert($popibay_watermark_new,'center')->save($destinationPath.$fileName);
+
+
+		      echo $fileName;
+		      exit;
+
 		      Image::make($file)->insert($popibay_watermark_new,'center')->save($destinationPath.$fileName);
 		      Image::make($file)->resize(125, 155)->save($thumbnail_path.$fileName); // thumbnail image
 
