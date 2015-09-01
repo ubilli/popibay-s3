@@ -102,6 +102,13 @@ class ImageUploadController extends \BaseController {
 		  	 foreach ($files as $file) {
 		  	  $destinationPath = 'public/pb-uploads/pet_images/'; // upload path
 		  	  $thumbnail_path = 'public/pb-uploads/pet_images_thumbnail/';
+
+		  	  $destinationPath_two = 'pb-uploads/pet_images/'; // upload path
+		  	  $thumbnail_path_two = 'pb-uploads/pet_images_thumbnail/';
+
+		  	  $destinationPath = $destinationPath_two;
+		  	  $thumbnail_path = $thumbnail_path;
+
 		  	  $popibay_watermark = 'public/pb-uploads/pet_images/popibay_white_logo_watermark/popibay_watermark_logo.png';
 		  	  $popibay_watermark_new = 'public/pb-uploads/pet_images/popibay_white_logo_watermark/popibay_watermark_opacity_logo.png';
 		      $extension = $file->getClientOriginalExtension(); // getting image extension
@@ -110,9 +117,6 @@ class ImageUploadController extends \BaseController {
 		      $fileName = $random_number.'.'.$extension; // renaming image
 		      // Image::make($file)->resize(600, 357)->insert($popibay_watermark_new,'center')->save($destinationPath.$fileName);
 
-
-		      echo $fileName;
-		      exit;
 
 		      Image::make($file)->insert($popibay_watermark_new,'center')->save($destinationPath.$fileName);
 		      Image::make($file)->resize(125, 155)->save($thumbnail_path.$fileName); // thumbnail image
