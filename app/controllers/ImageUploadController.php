@@ -9,14 +9,7 @@
  */
 class ImageUploadController extends \BaseController {
 
-	/*
-		This class is a test for the not readble exception 
-		test for the class on heroku,
-		Note: this controller is a test controller.
-		The main controller is named "ImageUploadController_Main.php"
-	*/
-
-
+	
 	public function image_local(){
 
 	  $all_inputs = Input::all();
@@ -93,7 +86,7 @@ class ImageUploadController extends \BaseController {
 }
 
 
-	public function image(){
+	public function image_local_to_s3(){
 		  $all_inputs = Input::all();
 		  $files = Input::file('file');
 		  $app_token = Input::get('_token');
@@ -102,13 +95,6 @@ class ImageUploadController extends \BaseController {
 		  	 foreach ($files as $file) {
 		  	  $destinationPath = 'public/pb-uploads/pet_images/'; // upload path
 		  	  $thumbnail_path = 'public/pb-uploads/pet_images_thumbnail/';
-
-		  	  $destinationPath_two = 'pb-uploads/pet_images/'; // upload path
-		  	  $thumbnail_path_two = 'pb-uploads/pet_images_thumbnail/';
-
-		  	  $destinationPath = $destinationPath_two;
-		  	  $thumbnail_path = $thumbnail_path;
-
 		  	  $popibay_watermark = 'public/pb-uploads/pet_images/popibay_white_logo_watermark/popibay_watermark_logo.png';
 		  	  $popibay_watermark_new = 'public/pb-uploads/pet_images/popibay_white_logo_watermark/popibay_watermark_opacity_logo.png';
 		      $extension = $file->getClientOriginalExtension(); // getting image extension
@@ -116,8 +102,104 @@ class ImageUploadController extends \BaseController {
 		      $random_number = rand(11111,99999);
 		      $fileName = $random_number.'.'.$extension; // renaming image
 		      // Image::make($file)->resize(600, 357)->insert($popibay_watermark_new,'center')->save($destinationPath.$fileName);
+		      Image::make($file)->insert($popibay_watermark_new,'center')->save($destinationPath.$fileName);
+		      Image::make($file)->resize(125, 155)->save($thumbnail_path.$fileName); // thumbnail image
+
+		      $destinationPath_del = $destinationPath;
+			  $thumbnail_path_del = $thumbnail_path;
+
+		      $s3_url_domain = 'https://s3.amazonaws.com/';
+		      $s3_bucket = 'popibay-bucket-s3/';
+		      $s3_destination_path = 'popibay/pb-uploads/pet_images/'.$fileName;
+		      $s3_thumbnail_path = 'popibay/pb-uploads/pet_images_thumbnail/'.$fileName;
+
+		      $destination_path_to_s3 = 'pb-uploads/pet_images/';
+		      $thumbnail_path_to_s3 = 'pb-uploads/pet_images_thumbnail/';
+
+		      $s3_destination_path_db = $s3_bucket.'popibay/pb-uploads/pet_images/';
+		      $s3_thumbnail_path_db = $s3_bucket.'popibay/pb-uploads/pet_images_thumbnail/';
 
 
+		      $s3 = AWS::get('s3');
+		      $s3->putObject(array(
+		      	'Bucket'     => 'popibay-bucket-s3',
+		      	'Key'        => $s3_destination_path,
+		      	'Body' => $destination_path_to_s3.$fileName
+		      	));
+
+		      $s3 = AWS::get('s3');
+		      $s3->putObject(array(
+		      	'Bucket'     => 'popibay-bucket-s3',
+		      	'Key'        => $s3_thumbnail_path,
+		      	'Body' => $thumbnail_path_to_s3.$fileName
+		      	));
+
+
+		      $domain = $s3_url_domain;
+		      $destinationPath = $s3_destination_path_db; // upload path
+		  	  $thumbnail_path = $s3_thumbnail_path_db;
+		  	  $temp_id = rand(1,100);
+		  	  // save temp_id value to session...
+		  	  // $temp_saved_id = Petimage::where('temp_id','=',$temp_id)->first();
+		      // $temp_saved_id = $temp_saved_id->temp_id;
+		      $saved_temp_id = Session::get('saved_temp_id');
+		      if ( isset($saved_temp_id) ) {
+		      	
+		      	$pet_image = new Petimage;
+		      	$pet_image->temp_id = $saved_temp_id;
+		      	$pet_image->petad_id = 0;
+		      	$pet_image->original_name = $original_name;
+		      	$pet_image->image_path = $domain.$destinationPath.$fileName;
+		      	$pet_image->image_thumbnail_path = $domain.$thumbnail_path.$fileName;
+		      	$pet_image->image_name = $fileName;
+		      	$pet_image->save();
+
+		      	// delete the file from the two folders to 
+			    // prevent the heroku server from crashing due 
+			    // to low storage.
+
+			    File::delete($destinationPath_del.$fileName);
+			    File::delete($thumbnail_path_del.$fileName);
+		      	exit;
+		      }
+		      // Save to image table...
+		      $pet_image = new Petimage;
+		      $pet_image->temp_id = $temp_id;
+		      $pet_image->petad_id = 0;
+		      $pet_image->original_name = $original_name;
+		      $pet_image->image_path = $domain.$destinationPath.$fileName;
+		      $pet_image->image_thumbnail_path = $domain.$thumbnail_path.$fileName;
+		      $pet_image->image_name = $fileName;
+		      $pet_image->save();
+		      Session::put('saved_temp_id', $temp_id);
+
+		      // delete the file from the two folders to 
+		      // prevent the heroku server from crashing due 
+		      // to low storage.
+
+		      File::delete($destinationPath_del.$fileName);
+		      File::delete($thumbnail_path_del.$fileName);
+		  	 }
+
+		}
+	}
+
+	public function image(){
+		  $all_inputs = Input::all();
+		  $files = Input::file('file');
+		  $app_token = Input::get('_token');
+		  // setting up rules
+		  	if (Input::hasFile('file')) {
+		  	 foreach ($files as $file) {
+		  	  $destinationPath = $_SERVER['DOCUMENT_ROOT'].'/tmp/pb_temp_img/large/';
+		  	  $thumbnail_path = $_SERVER['DOCUMENT_ROOT'].'/tmp/pb_temp_img/thumbnail/';
+		  	  $popibay_watermark = 'public/pb-uploads/pet_images/popibay_white_logo_watermark/popibay_watermark_logo.png';
+		  	  $popibay_watermark_new = 'public/pb-uploads/pet_images/popibay_white_logo_watermark/popibay_watermark_opacity_logo.png';
+		      $extension = $file->getClientOriginalExtension(); // getting image extension
+		      $original_name = $file->getClientOriginalName();
+		      $random_number = rand(11111,99999);
+		      $fileName = $random_number.'.'.$extension; // renaming image
+		      // Image::make($file)->resize(600, 357)->insert($popibay_watermark_new,'center')->save($destinationPath.$fileName);
 		      Image::make($file)->insert($popibay_watermark_new,'center')->save($destinationPath.$fileName);
 		      Image::make($file)->resize(125, 155)->save($thumbnail_path.$fileName); // thumbnail image
 
